@@ -58,6 +58,9 @@ static pinNumbers_t getV02ShieldMapping(void)
   return pins;
 }
 
+//Forward declaration: dipakai oleh default mapping F411 (didefinisikan lebih bawah)
+static pinNumbers_t getV04ShieldMapping(void);
+
 TESTABLE_STATIC pinNumbers_t getDefaultPinMapping(void)
 {
 #if defined(STM32F407xx)
@@ -169,6 +172,9 @@ TESTABLE_STATIC pinNumbers_t getDefaultPinMapping(void)
   /* = PE15; */ //
 
   return pins;
+#elif defined(STM32F411xE)
+  //Blackpill F411CE: EEPROM kosong / boardID belum diset -> pakai mapping v0.4 (blok STM32F411xE)
+  return getV04ShieldMapping();
 #else
   return getV02ShieldMapping();
 #endif  
@@ -428,6 +434,43 @@ static pinNumbers_t getV04ShieldMapping(void)
   /* = PE13; */ //
   /* = PE14; */ //
   /* = PE15; */ //
+
+#elif defined(STM32F411xE)
+  //Blackpill F411CE (STM32duino) dipetakan ke hardware Speeduino v0.4.4d versi 3.3V.
+  //Terlarang: PA11/PA12 (USB), PA13/PA14 (SWD), PB2 (BOOT1), PC14/PC15 (kristal LSE), PC13 (LED).
+  //Footprint SPI flash Blackpill memakai PA4-PA7: jangan solder flash jika pin itu dipakai di sini.
+  //Injektor & coil: sama dengan default generic F411 di bawah.
+  pins.setInjectorPin(0, PB7);//Output pin injector 1 is on
+  pins.setInjectorPin(1, PB6);//Output pin injector 2 is on
+  pins.setInjectorPin(2, PB5);//Output pin injector 3 is on
+  pins.setInjectorPin(3, PB4);//Output pin injector 4 is on
+  pins.setCoilPin(0, PB9);//Pin for coil 1
+  pins.setCoilPin(1, PB8);//Pin for coil 2
+  pins.setCoilPin(2, PB3);//Pin for coil 3
+  pins.setCoilPin(3, PA15);//Pin for coil 4
+  //Analog (A0-A5 = PA0-PA5, A8 = PB0 pada variant Blackpill F411CE; VERIFY)
+  pins.pinIAT = A0; //IAT sensor pin
+  pins.pinCLT = A1; //CLT sensor pin
+  pins.pinTPS = A2; //TPS input pin (lewat pembagi 3.3V)
+  pins.pinMAP = A3; //MAP sensor pin (lewat pembagi 3.3V)
+  pins.pinBat = A4; //Battery reference voltage pin
+  pins.pinBaro = A5; //Baro / MAP2
+  pins.pinO2 = A8; //O2 sensor pin (lewat pembagi 3.3V)
+  //Input digital (EXTI line berbeda: 12, 13, 14)
+  pins.pinTrigger = PB12; //Crank
+  pins.pinTrigger2 = PB13; //Cam
+  pins.pinFlex = PB14; //Flex sensor
+  pins.pinLaunch = PB15; //Clutch / launch input
+  //Output
+  pins.pinBoost = PA6; //Boost control
+  pins.pinIdle1 = PA7; //Single wire idle control
+  pins.pinIdle2 = PA8; //2 wire idle control (HC-1)
+  pins.pinVVT_1 = PB1; //VVT output (HC-2)
+  pins.pinFan = PB10; //Fan output
+  pins.pinFuelPump = PA9; //Fuel pump output
+  pins.pinTachOut = PA10; //Tacho output
+  //Tidak dipetakan (pin terbatas): stepper, VSS, trigger3, VVT_2, reset control, WMI.
+  //Nilai awal AVR dari atas fungsi masih tersisa di sana - jangan aktifkan fitur-fitur itu di TunerStudio.
 
 #elif defined(CORE_STM32)
   //https://github.com/stm32duino/Arduino_Core_STM32/blob/master/variants/Generic_F411Cx/variant.h#L28
