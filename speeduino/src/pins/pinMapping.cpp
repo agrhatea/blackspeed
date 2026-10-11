@@ -60,6 +60,9 @@ static pinNumbers_t getV02ShieldMapping(void)
 
 //Forward declaration: dipakai oleh default mapping F411 (didefinisikan lebih bawah)
 static pinNumbers_t getV04ShieldMapping(void);
+#if defined(STM32F411xE)
+static pinNumbers_t getNO2CMapping(void);
+#endif
 
 TESTABLE_STATIC pinNumbers_t getDefaultPinMapping(void)
 {
@@ -173,8 +176,8 @@ TESTABLE_STATIC pinNumbers_t getDefaultPinMapping(void)
 
   return pins;
 #elif defined(STM32F411xE)
-  //Blackpill F411CE: EEPROM kosong / boardID belum diset -> pakai mapping v0.4 (blok STM32F411xE)
-  return getV04ShieldMapping();
+  //Blackpill F411CE: EEPROM kosong / boardID belum diset -> pakai mapping NO2C (blok STM32F411xE di getNO2CMapping)
+  return getNO2CMapping();
 #else
   return getV02ShieldMapping();
 #endif  
@@ -988,6 +991,51 @@ static pinNumbers_t getNO2CMapping(void)
   pins.pinFlex = 20; // Flex sensor (Must be external interrupt enabled) - ONLY WITH DB
   pins.pinFan = 30; //Pin for the fan output - ONLY WITH DB
   pins.pinResetControl = 26; //Reset control output
+
+#if defined(STM32F411xE)
+  //Blackpill F411CE (STM32duino): fitur NO2C dipetakan ke pin F411.
+  //Pin fisik sensor/injektor/coil sama dengan blok F411 v0.4 supaya rancangan hardware 3.3V tidak berubah.
+  //Terlarang: PA11/PA12 (USB), PA13/PA14 (SWD), PB2 (BOOT1), PC14/PC15 (kristal LSE).
+  //PC13 (LED) dipakai sebagai pin "pembuangan" untuk fungsi yang tidak ada di NO2C, agar tidak tersisa nomor pin AVR.
+  pins.setInjectorPin(0, PB7);//Output pin injector 1
+  pins.setInjectorPin(1, PB6);//Output pin injector 2
+  pins.setInjectorPin(2, PC13);//injector 3 - NOT USED
+  pins.setInjectorPin(3, PC13);//injector 4 - NOT USED
+  pins.setInjectorPin(4, PC13);//Placeholder only - NOT USED
+  pins.setCoilPin(0, PB9);//Pin for coil 1
+  pins.setCoilPin(1, PB8);//Pin for coil 2
+  pins.setCoilPin(2, PB3);//Pin for coil 3 - ONLY WITH DB2
+  pins.setCoilPin(3, PA15);//Pin for coil 4 - ONLY WITH DB2
+  pins.setCoilPin(4, PC13);//Placeholder only - NOT USED
+  pins.pinTrigger = PB12; //Crank (EXTI12)
+  pins.pinTrigger2 = PB13; //Cam (EXTI13)
+  pins.pinTrigger3 = PC13; //Cam 2 - tidak tersedia
+  //Analog (A0-A5 = PA0-PA5, A8 = PB0 pada variant Blackpill F411CE; VERIFY)
+  pins.pinIAT = A0; //IAT
+  pins.pinCLT = A1; //CLT
+  pins.pinTPS = A2; //TPS (lewat pembagi 3.3V)
+  pins.pinMAP = A3; //MAP (lewat pembagi 3.3V)
+  pins.pinBat = A4; //Battery reference voltage
+  pins.pinBaro = A5; //Baro - ONLY WITH DB
+  pins.pinO2 = A8; //O2 (lewat pembagi 3.3V)
+  //Output
+  pins.pinBoost = PA6; //Boost control
+  pins.pinIdle1 = PA7; //Single wire idle control
+  pins.pinIdle2 = PC13; //2 wire idle - NOT USED
+  pins.pinVVT_1 = PB1; //VVT output
+  pins.pinVVT_2 = PC13; //VVT2 - tidak tersedia
+  pins.pinFan = PB10; //Fan - ONLY WITH DB
+  pins.pinFuelPump = PA9; //Fuel pump output
+  pins.pinTachOut = PA10; //Tacho output
+  pins.pinStepperStep = PA8; //Step pin for DRV8825 driver
+  pins.pinStepperDir = PB5; //Direction pin for DRV8825 driver
+  pins.pinStepperEnable = PB4; //Enable pin for DRV8825 driver
+  //Input digital
+  pins.pinFlex = PB14; //Flex sensor - ONLY WITH DB (EXTI14)
+  pins.pinLaunch = PB15; //Launch / clutch input
+  pins.pinResetControl = PC13; //Reset control - tidak tersedia
+#endif
+
   return pins;
 }
 
