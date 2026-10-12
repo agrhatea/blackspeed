@@ -60,6 +60,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "src/controllers/fan/fanController.h"
 #include "src/controllers/boost/boostController.h"
 #include "src/controllers/aircon/airconController.h"
+#include "lpg_piggyback.h"
 #include "src/controllers/nitrous/nitrousController.h"
 #include "src/controllers/auxChannels/auxChannelController.h"
 
@@ -73,6 +74,7 @@ void setup(void)
 {
   currentStatus.initialisationComplete = false; //Tracks whether the initialiseAll() function has run completely
   initialiseAll();
+  lpgInit();
 }
 
 /** Lookup the current VE value from the primary 3D fuel map.
@@ -152,6 +154,7 @@ BEGIN_LTO_ALWAYS_INLINE(void) loop(void)
 
       if(mainLoopCount < UINT16_MAX) { mainLoopCount++; }
       currentStatus.LOOP_TIMER = getAndClearTimerMask();
+      lpgUpdate(currentStatus);
 
       //SERIAL Comms
       //Initially check that the last serial send values request is not still outstanding

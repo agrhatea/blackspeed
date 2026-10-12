@@ -375,6 +375,9 @@ byte getTSLogEntry(uint16_t byteNum)
     case 137: statusValue = highByte(fuelSchedule8.pw); break;
 #endif
     case 138: statusValue = currentStatus.systemTemp; break;
+    // LPG piggyback: measured petrol injector pulse width (uS), channel 1. INI: petrolPW1 at offset 139 (U16)
+    case 139: statusValue = lowByte(currentStatus.petrolPW1); break;
+    case 140: statusValue = highByte(currentStatus.petrolPW1); break;
     default: statusValue = 0; // MISRA check
   }
 

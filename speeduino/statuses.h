@@ -381,4 +381,7 @@ struct statuses {
 
   vvtStatus_t vvt1;
   vvtStatus_t vvt2;
+
+  // LPG piggyback (lpg_piggyback.cpp)
+  uint16_t petrolPW1 = 0U; ///< Measured petrol injector pulse width, channel 1, in uS (0 = no pulses seen)
 };
