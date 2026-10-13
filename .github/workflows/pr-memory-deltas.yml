@@ -37,7 +37,7 @@ jobs:
         echo '${{ env.PIO_ENVS }}' | jq -r '.[0] |= "CMD_PIO_ENVS=-e " + . | join(" -e ")' >> $GITHUB_OUTPUT
 
     - name: Checkout PR
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         path: ${{ env.PR_FOLDER }}
         fetch-depth: 2
@@ -64,7 +64,7 @@ jobs:
         platformio run -d ${{ env.PR_FOLDER }} ${{ steps.build_command_line.outputs.CMD_PIO_ENVS }} 2>&1 | tee ${{ env.PR_LOG_FILE }}
     
     - name: Checkout Base Branch
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         ref: ${{ steps.comparison_base.outputs.sha }}
         path: ${{ env.BASE_FOLDER }}
