@@ -90,7 +90,7 @@ jobs:
 
     - name: Upload build logs
       if: ${{ always() }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: memory-build-logs
         path: |
@@ -99,7 +99,7 @@ jobs:
 
       # This step is needed to pass the size data to the report job.
     - name: Upload sketches report to workflow artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: sketches-report-all
         path: |

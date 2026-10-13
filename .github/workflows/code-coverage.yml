@@ -104,7 +104,7 @@ jobs:
 
     - name: Upload reports
       if: ${{ env.ACT }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         path: |
           .pio/build/${{ env.PIO_ENV }}/${{ env.FILE_ROOT }}.*
