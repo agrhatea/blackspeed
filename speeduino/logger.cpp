@@ -378,6 +378,11 @@ byte getTSLogEntry(uint16_t byteNum)
     // LPG piggyback: measured petrol injector pulse width (uS), channel 1. INI: petrolPW1 at offset 139 (U16)
     case 139: statusValue = lowByte(currentStatus.petrolPW1); break;
     case 140: statusValue = highByte(currentStatus.petrolPW1); break;
+    // petrolPeriod1 (uS) as U32 little-endian at offsets 141-144
+    case 141: statusValue = (byte)(currentStatus.petrolPeriod1 & 0xFFU); break;
+    case 142: statusValue = (byte)((currentStatus.petrolPeriod1 >> 8U) & 0xFFU); break;
+    case 143: statusValue = (byte)((currentStatus.petrolPeriod1 >> 16U) & 0xFFU); break;
+    case 144: statusValue = (byte)((currentStatus.petrolPeriod1 >> 24U) & 0xFFU); break;
     default: statusValue = 0; // MISRA check
   }
 
