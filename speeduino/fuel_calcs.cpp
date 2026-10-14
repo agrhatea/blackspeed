@@ -5,6 +5,7 @@
 #include "decoders.h"
 #include "units.h"
 #include "scheduler_fuel_controller.h"
+#include "lpg_piggyback.h"
 
 TESTABLE_INLINE_STATIC uint16_t calculateRequiredFuel(const config2 &page2, const statuses &current) {
   uint16_t reqFuel = page2.reqFuel * 100U; //Convert to uS and an int. This is the only variable to be used in calculations
@@ -245,6 +246,7 @@ TESTABLE_INLINE_STATIC uint16_t calculateOpenTime(const config2 &page2, const st
 }
 
 pulseWidths computePulseWidths(const config2 &page2, const config6 &page6, const config10 &page10, const statuses &current) {
+  if (lpgOverridesFuel()) { return { 0U, 0U }; } // LPG piggyback: pulsa gas digerakkan lpg_piggyback.cpp
   if (current.corrections!=0U) {
     uint16_t pwLimit = calculatePWLimit(page2, current);
     uint16_t injOpenTime = calculateOpenTime(page2, current);

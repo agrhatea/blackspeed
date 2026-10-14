@@ -385,4 +385,6 @@ struct statuses {
   // LPG piggyback (lpg_piggyback.cpp)
   uint16_t petrolPW1 = 0U; ///< Measured petrol injector pulse width, channel 1, in uS (0 = no pulses seen)
   uint32_t petrolPeriod1 = 0U; ///< Time between successive petrol injection starts, channel 1, in uS (0 = unknown)
+  uint16_t gasPW1 = 0U; ///< Computed gas injector pulse width, channel 1, in uS
+  uint8_t gasOverruns = 0U; ///< Gas pulses skipped because the previous one was still running
 };
