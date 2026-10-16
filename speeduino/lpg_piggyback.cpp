@@ -16,9 +16,10 @@ namespace {
   // Tidak ada pulsa selama ini => mesin dianggap berhenti
   constexpr uint32_t PULSE_TIMEOUT_US = 500000U;
 
-  // ---- Pulsa gas (K tetap 1.0 dulu; tabel K menyusul) ----
-  constexpr uint32_t LPG_K_NUM = 100U;
-  constexpr uint32_t LPG_K_DEN = 100U;
+  // ---- Pulsa gas: K = nilai VE dari tabel di TunerStudio / 100 (VE 100 = K 1.0, VE 0 = tanpa gas) ----
+  // ---- Gerbang keselamatan (tidak berlaku di mode uji-mandiri) ----
+  constexpr uint16_t LPG_GATE_RPM_MIN = 500U;    // di bawah ini: tidak ada gas
+  constexpr uint16_t LPG_GATE_RPM_MAX = 12000U;  // di atas ini: tidak ada gas
   // Pulsa bensin lebih pendek dari ini: tidak ada pulsa gas (mis. injeksi ekstra/glitch)
   constexpr uint32_t LPG_MIN_PETROL_PW_US = 200U;
   // Batas atas pulsa gas (timer 16-bit pada 1 MHz maksimal 65 ms)
@@ -29,6 +30,7 @@ namespace {
   volatile uint16_t lastPw = 0U;      // lebar pulsa valid terakhir (uS)
   volatile uint32_t lastPeriod = 0U;  // selang antar awal injeksi bensin terakhir (uS)
   volatile uint16_t lastGasPw = 0U;   // pulsa gas terhitung terakhir (uS)
+  volatile bool lastGate = false;     // gerbang keselamatan terbuka saat pulsa terakhir
   volatile uint8_t  gasOverruns = 0U; // pulsa gas yang dilewati karena pulsa sebelumnya masih jalan
   volatile bool haveInjOn = false;    // sudah melihat tepi turun sebelum tepi naik
   volatile bool havePrevOn = false;   // sudah ada tepi turun sebelumnya (untuk hitung periode)
@@ -46,10 +48,43 @@ static void gasPulseEnd(void)
   gasActive = false;
 }
 
+#if LPG_SELFTEST
+// Mode uji-mandiri: pulsa "injektor bensin" buatan di LPG_PIN_SELFTEST (LOW = ON), memakai compare TIM9 kanal 2.
+namespace {
+  constexpr uint16_t ST_ON_US = 4000U;       // lebar pulsa
+  constexpr uint16_t ST_PERIOD_US = 40000U;  // periode (harus < 65535 untuk timer 16-bit)
+  volatile bool stOn = false;
+}
+
+static void selfTestToggle(void)
+{
+  if (stOn) {
+    digitalWrite(LPG_PIN_SELFTEST, HIGH);  // OFF
+    stOn = false;
+    TIM9->CCR2 = (uint16_t)(TIM9->CCR2 + (ST_PERIOD_US - ST_ON_US));
+  } else {
+    digitalWrite(LPG_PIN_SELFTEST, LOW);   // ON
+    stOn = true;
+    TIM9->CCR2 = (uint16_t)(TIM9->CCR2 + ST_ON_US);
+  }
+}
+#endif
+
 // Mulai pulsa gas dari lebar pulsa bensin (uS). Dipanggil dari ISR tepi naik injektor bensin.
 static inline void startGasPulse(uint32_t petrolPw)
 {
-  uint32_t gasPw = (petrolPw * LPG_K_NUM) / LPG_K_DEN;
+  // K dari tabel VE (diedit di TunerStudio). currentStatus.VE dihitung tiap putaran loop() di speeduino.ino.
+  uint32_t gasPw = (petrolPw * (uint32_t)currentStatus.VE) / 100U;
+
+#if LPG_SELFTEST
+  const bool gate = true;  // bench tanpa sinyal crank
+#else
+  const bool gate = (currentStatus.rotationStatus == EngineRotationStatus::Running)
+                 && (currentStatus.RPM >= LPG_GATE_RPM_MIN)
+                 && (currentStatus.RPM <= LPG_GATE_RPM_MAX);
+#endif
+  lastGate = gate;
+  if (!gate) { gasPw = 0U; }
   if (gasPw > LPG_MAX_GAS_PW_US) { gasPw = LPG_MAX_GAS_PW_US; }
   if (petrolPw < LPG_MIN_PETROL_PW_US) { gasPw = 0U; }
   lastGasPw = (uint16_t)gasPw;
@@ -110,8 +145,17 @@ void lpgInit(void)
   TIM9->DIER &= ~TIM_DIER_CC1IE;  // mulai nonaktif
   lpgTimer.resume();
 
+#if LPG_SELFTEST
+  pinMode(LPG_PIN_SELFTEST, OUTPUT);
+  digitalWrite(LPG_PIN_SELFTEST, HIGH);  // injektor buatan OFF
+  lpgTimer.setMode(2, TIMER_OUTPUT_COMPARE);
+  lpgTimer.attachInterrupt(2, selfTestToggle);
+  TIM9->CCR2 = (uint16_t)(TIM9->CNT + 1000U);  // mulai 1 ms dari sekarang
+#endif
+
   // Input injektor bensin
-  pinMode(LPG_PIN_PETROL_INJ1, INPUT);
+  // Pull-up internal: saat tidak ada sinyal pin tertahan HIGH (= injektor OFF), sehingga noise 50 Hz tidak terbaca sebagai pulsa
+  pinMode(LPG_PIN_PETROL_INJ1, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(LPG_PIN_PETROL_INJ1), petrolInjIsr, CHANGE);
 }
 
@@ -129,6 +173,7 @@ void lpgUpdate(statuses &current)
   current.petrolPeriod1 = alive ? period : 0U;
   current.gasPW1 = alive ? gasPw : 0U;
   current.gasOverruns = gasOverruns;
+  current.gasGate = (alive && lastGate) ? 1U : 0U;
 }
 
 #endif

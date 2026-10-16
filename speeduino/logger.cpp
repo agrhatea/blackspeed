@@ -387,6 +387,7 @@ byte getTSLogEntry(uint16_t byteNum)
     case 145: statusValue = lowByte(currentStatus.gasPW1); break;
     case 146: statusValue = highByte(currentStatus.gasPW1); break;
     case 147: statusValue = currentStatus.gasOverruns; break;
+    case 148: statusValue = currentStatus.gasGate; break;
     default: statusValue = 0; // MISRA check
   }
 

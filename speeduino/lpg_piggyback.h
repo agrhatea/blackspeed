@@ -24,6 +24,16 @@
 
 /** 0 = pulsa gas hanya DIHITUNG dan dicatat di log (gasPW1), pin tidak digerakkan (aman).
  *  1 = pin LPG_PIN_GAS_INJ1 digerakkan. Mulai uji dengan LED/beban pengganti, bukan injektor gas. */
+/** 1 = mode uji-mandiri: pin LPG_PIN_SELFTEST membangkitkan pulsa "injektor bensin"
+ *  (LOW 4 ms setiap 40 ms). Hubungkan LPG_PIN_SELFTEST ke LPG_PIN_PETROL_INJ1 dengan kabel jumper.
+ *  Hanya untuk uji bench; set kembali ke 0 sebelum dipasang ke kendaraan. */
+#ifndef LPG_SELFTEST
+#define LPG_SELFTEST 1
+#endif
+
+/** Pin keluaran uji-mandiri (bekas pin flex di blok F411 pinMapping.cpp; jangan aktifkan flex di TunerStudio). */
+#define LPG_PIN_SELFTEST PB14
+
 #ifndef LPG_GAS_OUTPUT_ENABLE
 #define LPG_GAS_OUTPUT_ENABLE 0
 #endif

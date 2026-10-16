@@ -387,4 +387,5 @@ struct statuses {
   uint32_t petrolPeriod1 = 0U; ///< Time between successive petrol injection starts, channel 1, in uS (0 = unknown)
   uint16_t gasPW1 = 0U; ///< Computed gas injector pulse width, channel 1, in uS
   uint8_t gasOverruns = 0U; ///< Gas pulses skipped because the previous one was still running
+  uint8_t gasGate = 0U; ///< 1 = safety gate open (running, RPM in range) for the last gas pulse
 };
